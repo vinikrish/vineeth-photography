@@ -1,0 +1,30 @@
+/* ------------------------------
+   Full Height Layout Structure
+---------------------------------*/
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: black;
+  color: white;
+}
+
+.site-header {
+  flex-shrink: 0;
+}
+
+.cover-image {
+  flex-shrink: 0;
+}
+
+.main-content {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer {
+  flex-shrink: 0;
+}
