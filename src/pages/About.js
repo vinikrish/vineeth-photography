@@ -1,10 +1,22 @@
 import React from 'react';
 import './Contact.css';
 import './About.css';
+import profilePhoto from '../assets/profile-photo-for-bio.jpg';
 
 function About() {
   return (
     <div className="contact-container">
+      {/* Profile Photo Section */}
+      <div className="profile-photo-section">
+        <div className="profile-photo-container">
+          <img 
+            src={profilePhoto} 
+            alt="Vineeth Radhakrishnan - Wildlife and Landscape Photographer" 
+            className="profile-photo"
+          />
+        </div>
+      </div>
+      
       <div className="contact-description centered-text">
         <p>
           I'm Vineeth Radhakrishnan, a passionate wildlife and landscape photographer with 7-8 years of experience capturing the extraordinary beauty of our natural world. I have traveled across the United States with my camera gear, seeking out the perfect moments - from the intricate details of macro insects to the vast expanse of the Milky Way stretching across dark skies.
