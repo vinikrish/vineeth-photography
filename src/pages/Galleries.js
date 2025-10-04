@@ -1,136 +1,239 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import './Galleries.css';
 
 function importAll(r) {
-  const files = {};
+  const images = {};
   r.keys().forEach((key) => {
-    const cleanedKey = key.replace('./', '');
-    files[cleanedKey] = r(key);
-  });
-  return files;
-}
+    const pathParts = key.replace('./', '').split('/');
+    let current = images;
 
-const images = importAll(require.context('../assets/galleries', true, /\.(jpg|jpeg)$/));
-
-function buildFileTree(files) {
-  const tree = {};
-  for (const path in files) {
-    const parts = path.split('/');
-    let current = tree;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (i === parts.length - 1) {
-        current[part] = files[path];
+    pathParts.forEach((part, i) => {
+      if (i === pathParts.length - 1) {
+        if (part.toLowerCase().endsWith('.jpg')) {
+          current[part] = r(key);
+        }
       } else {
         current[part] = current[part] || {};
         current = current[part];
       }
-    }
-  }
-  return tree;
+    });
+  });
+  return images;
 }
 
-function getSubtree(tree, path) {
-  const parts = path.split('/').filter(Boolean);
-  let current = tree;
-  for (const part of parts) {
-    if (current && typeof current === 'object') {
-      current = current[part];
-    } else {
-      return null;
-    }
+const galleryStructure = importAll(
+  require.context('../assets/galleries', true, /\.(jpg)$/)
+);
+
+function getCurrentDirectory(structure, pathParts) {
+  let current = structure;
+  for (let part of pathParts) {
+    current = current[part];
+    if (!current) break;
   }
   return current;
 }
 
-function findFirstImage(obj) {
-  if (typeof obj !== 'object') return null;
-  for (const key in obj) {
-    if (typeof obj[key] === 'string' && key.toLowerCase().endsWith('.jpg')) {
-      return obj[key];
-    } else if (typeof obj[key] === 'object') {
-      const found = findFirstImage(obj[key]);
-      if (found) return found;
-    }
+function getRandomImageFromFolder(folderContent) {
+  const allImages = [];
+  
+  function collectImages(obj) {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        // This is an image file
+        allImages.push(value);
+      } else if (typeof value === 'object') {
+        // This is a subfolder, recurse into it
+        collectImages(value);
+      }
+    });
   }
+  
+  collectImages(folderContent);
+  
+  if (allImages.length > 0) {
+    const randomIndex = Math.floor(Math.random() * allImages.length);
+    return allImages[randomIndex];
+  }
+  
   return null;
 }
 
-const Galleries = () => {
-  const tree = buildFileTree(images);
-  const [path, setPath] = useState('');
-  const [popupImage, setPopupImage] = useState(null);
-  const [slideshowImages, setSlideshowImages] = useState([]);
-  const [slideshowIndex, setSlideshowIndex] = useState(0);
-  const [showSlideshow, setShowSlideshow] = useState(false);
+function Galleries() {
+  const [path, setPath] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const location = useLocation();
 
-  const current = getSubtree(tree, path);
-  const breadcrumbs = path.split('/').filter(Boolean);
-
+  // Reset path when navigating to galleries from other pages
   useEffect(() => {
-    if (!path) return;
-    const currentFolder = getSubtree(tree, path);
-    const images = Object.keys(currentFolder || {})
-      .filter((k) => k.toLowerCase().endsWith('.jpg'))
-      .map((img) => currentFolder[img]);
-    setSlideshowImages(images);
-    setSlideshowIndex(0);
-  }, [path]);
+    // Only reset if we're coming from a different page (not just refreshing)
+    if (location.pathname === '/galleries' && location.state?.resetPath !== false) {
+      setPath([]);
+    }
+  }, [location.pathname]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (selectedImage) {
+        if (e.key === 'ArrowLeft') {
+          navigateImage('prev');
+        } else if (e.key === 'ArrowRight') {
+          navigateImage('next');
+        } else if (e.key === 'Escape') {
+          setSelectedImage(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedImage]);
+
+  const currentDir = getCurrentDirectory(galleryStructure, path);
+
+  const entries = Object.entries(currentDir || {}).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
+
+  const folders = entries.filter(([key, value]) => typeof value === 'object');
+  const images = entries.filter(([key, value]) => typeof value === 'string');
+
+  // Navigation functions
+  const navigateImage = (direction) => {
+    if (!selectedImage || images.length === 0) return;
+
+    const currentIndex = images.findIndex(([fileName, imagePath]) => imagePath === selectedImage.src);
+    let newIndex;
+
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % images.length;
+    } else {
+      newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    }
+
+    const [fileName, imagePath] = images[newIndex];
+    setSelectedImage({ src: imagePath, alt: fileName });
+  };
+
+  const canNavigatePrev = selectedImage && images.length > 1;
+  const canNavigateNext = selectedImage && images.length > 1;
+
+  const breadcrumb = (
+    <div className="breadcrumb">
+      <span
+        onClick={() => setPath([])}
+        className="breadcrumb-segment breadcrumb-home"
+      >
+        Galleries
+      </span>
+      {path.map((segment, index) => (
+        <span key={index}>
+          <span className="breadcrumb-separator"> / </span>
+          <span
+            onClick={() => setPath(path.slice(0, index + 1))}
+            className="breadcrumb-segment"
+          >
+            {segment}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
 
   return (
     <div className="galleries-container">
-      <h2 className="galleries-title">Galleries</h2>
-      {breadcrumbs.length > 0 && (
-        <div className="breadcrumbs">
-          {breadcrumbs.map((crumb, idx) => (
-            <span key={idx} onClick={() => setPath(breadcrumbs.slice(0, idx + 1).join('/'))}>
-              {crumb}
-              {idx < breadcrumbs.length - 1 && ' / '}
-            </span>
+      {path.length > 0 && breadcrumb}
+
+      {folders.length > 0 && (
+        <div className="folder-grid">
+          {folders.map(([folderName, folderContent]) => {
+            // First try to find a direct image in the folder
+            const directImage = Object.entries(folderContent).find(
+              ([name, value]) => typeof value === 'string'
+            );
+            
+            // If no direct image, use the recursive function to find a random image from subfolders
+            const previewImageSrc = directImage ? directImage[1] : getRandomImageFromFolder(folderContent);
+
+            return (
+              <div
+                className="folder-card"
+                key={folderName}
+                onClick={() => setPath([...path, folderName])}
+              >
+                {previewImageSrc ? (
+                  <img
+                    src={previewImageSrc}
+                    alt={folderName}
+                    className="folder-preview"
+                  />
+                ) : (
+                  <div className="folder-placeholder" />
+                )}
+                <div className="folder-label">{folderName}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {images.length > 0 && (
+        <div className="image-grid">
+          {images.map(([fileName, imagePath]) => (
+            <div 
+              className="image-card" 
+              key={fileName}
+              onClick={() => setSelectedImage({ src: imagePath, alt: fileName })}
+            >
+              <img src={imagePath} alt={fileName} className="gallery-image" />
+            </div>
           ))}
         </div>
       )}
-      {slideshowImages.length > 0 && (
-        <div className="slideshow-link" onClick={() => setShowSlideshow(true)}>View Slideshow</div>
-      )}
-      <div className="grid">
-        {Object.entries(current || {}).map(([name, value]) => {
-          if (typeof value === 'string' && name.toLowerCase().endsWith('.jpg')) {
-            return (
-              <div key={name} className="image-card" onClick={() => setPopupImage(value)}>
-                <img src={value} alt="" className="thumbnail" />
-              </div>
-            );
-          } else if (typeof value === 'object') {
-            const preview = findFirstImage(value);
-            return (
-              <div key={name} className="folder-card" onClick={() => setPath(path ? `${path}/${name}` : name)}>
-                {preview && <img src={preview} alt={name} className="folder-preview" />}
-                <div className="folder-label">{name}</div>
-              </div>
-            );
-          }
-          return null;
-        })}
-      </div>
 
-      {popupImage && (
-        <div className="overlay" onClick={() => setPopupImage(null)}>
-          <img src={popupImage} alt="" className="popup-img" />
-          <button className="close-btn" onClick={() => setPopupImage(null)}>×</button>
-        </div>
-      )}
-
-      {showSlideshow && slideshowImages.length > 0 && (
-        <div className="overlay">
-          <img src={slideshowImages[slideshowIndex]} alt="" className="popup-img" />
-          <button className="close-btn" onClick={() => setShowSlideshow(false)}>×</button>
-          <button className="nav-btn left" onClick={() => setSlideshowIndex((slideshowIndex - 1 + slideshowImages.length) % slideshowImages.length)}>‹</button>
-          <button className="nav-btn right" onClick={() => setSlideshowIndex((slideshowIndex + 1) % slideshowImages.length)}>›</button>
+      {selectedImage && (
+        <div className="image-overlay" onClick={() => setSelectedImage(null)}>
+          <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={() => setSelectedImage(null)}>
+              ×
+            </button>
+            
+            {canNavigatePrev && (
+              <button 
+                className="nav-button nav-button-prev" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+              >
+                ‹
+              </button>
+            )}
+            
+            {canNavigateNext && (
+              <button 
+                className="nav-button nav-button-next" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+              >
+                ›
+              </button>
+            )}
+            
+            <img 
+              src={selectedImage.src} 
+              alt={selectedImage.alt} 
+              className="overlay-image"
+            />
+          </div>
         </div>
       )}
     </div>
   );
-};
+}
 
 export default Galleries;

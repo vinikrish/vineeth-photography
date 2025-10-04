@@ -1,0 +1,248 @@
+.contact-page {
+  padding: 0 20px;
+  margin-top: 0;
+  width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  align-self: flex-start; /* overrides App.css's vertical centering */
+}
+
+.contact-heading {
+  font-size: 15px;
+  font-weight: normal;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.contact-subtext {
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.contact-form {
+  text-align: left;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.contact-form button {
+  padding: 10px 20px;
+  background: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-form button[disabled] {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.success-message {
+  margin-top: 12px;
+  color: #00ff00;
+  font-weight: bold;
+  text-align: left;
+}
+
+.section-title {
+  font-size: 14px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background-color: #000; /* Ensures text sits cleanly on black background */
+  padding: 0 10px;
+  z-index: 1;
+}
+
+.about-page {
+  width: 100%;
+  text-align: center;
+}
+
+.about-divider {
+  width: 100%;
+  border-top: 1px solid #666;
+  text-align: center;
+  margin: 20px 0 30px;
+  position: relative;
+}
+
+.about-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.full-divider {
+  width: 100%;
+  border-top: 1px solid #555;
+  text-align: center;
+  position: relative;
+  margin: 30px 0;
+}
+
+.section-title-container {
+  display: flex;
+  align-items: center;
+  margin: 40px 0 30px;
+  justify-content: center;
+  gap: 20px;
+}
+
+.section-line {
+  flex: 1;
+  height: 1px;
+  background-color: #555;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: normal;
+  color: #ddd;
+  white-space: nowrap;
+  padding: 0 10px;
+  text-align: center;
+}
+
+.bio-content {
+  text-align: left;
+  color: #ccc;
+  line-height: 1.6;
+  margin-top: 20px;
+}
+
+.page-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0; /* Remove padding to eliminate extra space */
+}
+
+.about-wrapper {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: normal;
+  color: #ccc;
+  text-align: center;
+  font-size: 14px;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.section-header::before,
+.section-header::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #555;
+  margin: 0 10px;
+}
+
+.about-content {
+  max-width: 800px;
+  margin: 20px auto 0 auto;
+  text-align: left;
+  color: white;
+}
+
+/* Ensures no unwanted space above "ABOUT ME" */
+.about-page {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Prevent spacing if a <main> tag is in Layout.js */
+main {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Remove top margin only for About page */
+.no-top-padding {
+  margin-top: 0 !important;
+}
+
+.contact-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #555;
+}
+
+.divider-text {
+  padding: 0 15px;
+  font-size: 1.3em;
+  color: #fff;
+  font-weight: normal;
+}
+
+.bio-paragraph {
+  text-align: center;
+  color: #ccc;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto 20px auto;
+}
+
+/* Light Theme Styles */
+.light-theme .contact-form input,
+.light-theme .contact-form textarea {
+  background: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.light-theme .contact-form button {
+  background: #4A90E2;
+  color: white;
+}
+
+.light-theme .contact-form button:hover {
+  background: #357abd;
+}
+
+.light-theme .contact-form button[disabled] {
+  background: #ccc;
+  color: #666;
+}
+
+.light-theme .divider-text {
+  color: #333;
+}
+
+.light-theme .bio-paragraph {
+  color: #666;
+}
+
+
+
+

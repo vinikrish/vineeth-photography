@@ -1,0 +1,58 @@
+.theme-toggle {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: white;
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle svg {
+  transition: all 0.3s ease;
+}
+
+/* Light theme styles */
+.light-theme .theme-toggle {
+  border-color: rgba(0, 0, 0, 0.3);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.light-theme .theme-toggle:hover {
+  border-color: rgba(0, 0, 0, 0.6);
+  color: #000;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Animation for icon transition */
+.theme-toggle svg {
+  animation: iconRotate 0.3s ease-in-out;
+}
+
+@keyframes iconRotate {
+  0% {
+    transform: rotate(-90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+}

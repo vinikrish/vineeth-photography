@@ -19,12 +19,18 @@
 
 .main-content {
   flex-grow: 1;
-  overflow: hidden;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
 }
 
 .footer {
   flex-shrink: 0;
+}
+
+a {
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #3498db;
 }

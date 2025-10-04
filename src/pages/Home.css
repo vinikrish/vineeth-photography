@@ -21,3 +21,8 @@
   opacity: 1;
   z-index: 1;
 }
+
+/* Light Theme Styles */
+.light-theme .slideshow-image {
+  background-color: #f8f9fa;
+}

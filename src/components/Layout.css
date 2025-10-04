@@ -1,29 +1,226 @@
-.layout-container {
+.layout-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: black;
   color: white;
+  transition: all 0.3s ease;
 }
+
 .cover-image {
-  background-size: cover;
-  background-position: center;
-  height: 100px;
-  width: 100%;
+  position: relative;
+  transition: all 0.3s ease;
 }
+
+
+
 .site-header {
   text-align: center;
-  padding: 10px 0;
-  background-color: black;
+  padding: 15px 0 20px 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
+  position: relative;
 }
+
+
+
+.site-header h1 {
+  margin: 0 0 15px 0;
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
 .navbar {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 5px;
+  margin-top: 0;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
 }
+
 .navbar a {
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
-  font-weight: bold;
+  margin: 0 20px;
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 8px 16px;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.navbar a:hover {
   color: white;
+  background-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+}
+
+.navbar a.active-link {
+  color: #4A90E2;
+  background-color: rgba(74,144,226,0.15);
+  box-shadow: 0 0 15px rgba(74,144,226,0.3);
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Light Theme Styles */
+.light-theme .layout-wrapper {
+  background-color: #ffffff;
+  color: #333;
+}
+
+
+
+
+
+.light-theme .site-header {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%);
+}
+
+.light-theme .site-header h1 {
+  color: #333;
+}
+
+.light-theme .navbar {
+  border-top: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.light-theme .navbar a {
+  color: rgba(0,0,0,0.7);
+}
+
+.light-theme .navbar a:hover {
+  color: #000;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.light-theme .navbar a.active-link {
+  color: #4A90E2;
+  background-color: rgba(74,144,226,0.15);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   =================================== */
+
+/* Tablet and smaller screens */
+@media screen and (max-width: 768px) {
+  .site-header {
+    padding: 10px 15px 15px 15px;
+  }
+  
+  .site-header h1 {
+    font-size: 1.5rem;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+  }
+  
+  .navbar {
+    padding: 8px 0;
+    margin-top: 5px;
+  }
+  
+  .navbar a {
+    margin: 0 8px;
+    font-size: 0.95rem;
+    padding: 6px 12px;
+    letter-spacing: 0.3px;
+  }
+  
+  .cover-image {
+    height: 60px !important;
+    max-width: 350px !important;
+  }
+}
+
+/* Mobile phones */
+@media screen and (max-width: 480px) {
+  .site-header {
+    padding: 8px 10px 12px 10px;
+  }
+  
+  .site-header h1 {
+    font-size: 1.2rem;
+    margin: 0 0 8px 0;
+    padding: 0 5px;
+  }
+  
+  .navbar {
+    padding: 5px 0;
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  .navbar a {
+    margin: 2px;
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    letter-spacing: 0.2px;
+    flex: 0 0 auto;
+    min-width: 60px;
+    text-align: center;
+  }
+  
+  .cover-image {
+    height: 50px !important;
+    max-width: 280px !important;
+    background-size: 70% auto !important;
+  }
+}
+
+/* Very small screens */
+@media screen and (max-width: 360px) {
+  .site-header h1 {
+    font-size: 1rem;
+    padding: 0 5px;
+  }
+  
+  .navbar a {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 55px;
+  }
+  
+  .cover-image {
+    height: 45px !important;
+    max-width: 250px !important;
+    background-size: 65% auto !important;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .site-header {
+    padding: 5px 10px 8px 10px;
+  }
+  
+  .site-header h1 {
+    font-size: 1.1rem;
+    margin: 0 0 5px 0;
+  }
+  
+  .navbar {
+    padding: 3px 0;
+    margin-top: 3px;
+  }
+  
+  .navbar a {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    margin: 0 5px;
+  }
+  
+  .cover-image {
+    height: 35px !important;
+    max-width: 200px !important;
+  }
 }
