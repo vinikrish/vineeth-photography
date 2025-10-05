@@ -164,14 +164,9 @@ class GoogleDriveService {
 
   // Method to get images from a public Google Drive folder (future implementation)
   async getPublicFolderImages(folderId) {
-    try {
-      // This would require the folder to be publicly accessible
-      // For now, returning empty to use local fallback
-      return [];
-    } catch (error) {
-      console.error('Error fetching public folder images:', error);
-      return [];
-    }
+    // This would require the folder to be publicly accessible
+    // For now, returning empty to use local fallback
+    return [];
   }
 
   // Method to check if service is available
@@ -181,4 +176,5 @@ class GoogleDriveService {
 }
 
 // Export a singleton instance
-export default new GoogleDriveService();
+const googleDriveService = new GoogleDriveService();
+export default googleDriveService;

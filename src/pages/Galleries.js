@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Galleries.css';
 
@@ -71,7 +71,33 @@ function Galleries() {
     if (location.pathname === '/galleries' && location.state?.resetPath !== false) {
       setPath([]);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.state?.resetPath]);
+
+  const currentDir = getCurrentDirectory(galleryStructure, path);
+
+  const entries = Object.entries(currentDir || {}).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
+
+  const folders = entries.filter(([key, value]) => typeof value === 'object');
+  const images = entries.filter(([key, value]) => typeof value === 'string');
+
+  // Navigation functions
+  const navigateImage = useCallback((direction) => {
+    if (!selectedImage || images.length === 0) return;
+
+    const currentIndex = images.findIndex(([fileName, imagePath]) => imagePath === selectedImage.src);
+    let newIndex;
+
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % images.length;
+    } else {
+      newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    }
+
+    const [fileName, imagePath] = images[newIndex];
+    setSelectedImage({ src: imagePath, alt: fileName });
+  }, [selectedImage, images]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -89,33 +115,7 @@ function Galleries() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [selectedImage]);
-
-  const currentDir = getCurrentDirectory(galleryStructure, path);
-
-  const entries = Object.entries(currentDir || {}).sort(([a], [b]) =>
-    a.localeCompare(b)
-  );
-
-  const folders = entries.filter(([key, value]) => typeof value === 'object');
-  const images = entries.filter(([key, value]) => typeof value === 'string');
-
-  // Navigation functions
-  const navigateImage = (direction) => {
-    if (!selectedImage || images.length === 0) return;
-
-    const currentIndex = images.findIndex(([fileName, imagePath]) => imagePath === selectedImage.src);
-    let newIndex;
-
-    if (direction === 'next') {
-      newIndex = (currentIndex + 1) % images.length;
-    } else {
-      newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
-    }
-
-    const [fileName, imagePath] = images[newIndex];
-    setSelectedImage({ src: imagePath, alt: fileName });
-  };
+  }, [selectedImage, navigateImage]);
 
   const canNavigatePrev = selectedImage && images.length > 1;
   const canNavigateNext = selectedImage && images.length > 1;
