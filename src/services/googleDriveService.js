@@ -87,7 +87,9 @@ class GoogleDriveService {
 
       console.log(`📡 Images API URL: ${url}`);
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        referrerPolicy: 'origin'
+      });
       console.log(`📊 Images Response status: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
