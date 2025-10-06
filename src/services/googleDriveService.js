@@ -10,8 +10,10 @@ class GoogleDriveService {
     console.log('🔧 Google Drive Service Configuration:');
     console.log('API Key:', this.apiKey ? `${this.apiKey.substring(0, 10)}...` : 'NOT SET');
     console.log('API Key Length:', this.apiKey ? this.apiKey.length : 0);
+    console.log('Full API Key (for debugging):', this.apiKey);
     console.log('Galleries Folder ID:', this.galleriesFolderId || 'NOT SET');
     console.log('Slideshow Folder ID:', this.slideshowFolderId || 'NOT SET');
+    console.log('Full Slideshow Folder ID (for debugging):', this.slideshowFolderId);
     console.log('Is Configured:', this.isConfigured);
     console.log('Environment variables:', {
       REACT_APP_GOOGLE_DRIVE_API_KEY: process.env.REACT_APP_GOOGLE_DRIVE_API_KEY ? 'SET' : 'NOT SET',
