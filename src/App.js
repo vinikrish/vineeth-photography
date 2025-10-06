@@ -12,7 +12,7 @@ import './App.css';
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename="/vineeth-photography">
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
