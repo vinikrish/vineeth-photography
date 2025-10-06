@@ -87,8 +87,14 @@ class GoogleDriveService {
 
       console.log(`📡 Images API URL: ${url}`);
 
+      console.log(`🌐 Current window location: ${window.location.href}`);
+      console.log(`🔗 Request referrer: ${document.referrer}`);
+      
       const response = await fetch(url, {
-        referrerPolicy: 'origin'
+        referrerPolicy: 'origin',
+        headers: {
+          'Referer': window.location.origin
+        }
       });
       console.log(`📊 Images Response status: ${response.status} ${response.statusText}`);
       
@@ -142,7 +148,9 @@ class GoogleDriveService {
         key: this.apiKey
       });
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        referrerPolicy: 'origin'
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
