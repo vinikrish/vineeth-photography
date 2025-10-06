@@ -80,6 +80,28 @@ class GoogleDriveService {
     try {
       console.log(`🖼️ Fetching images from folder: ${folderId}`);
       
+      // First, verify the folder exists
+      const folderCheckUrl = `${this.baseUrl}/files/${folderId}?key=${this.apiKey}`;
+      console.log(`🔍 Checking folder exists: ${folderCheckUrl}`);
+      
+      const folderResponse = await fetch(folderCheckUrl, {
+        referrerPolicy: 'origin',
+        headers: {
+          'Referer': window.location.origin
+        }
+      });
+      
+      console.log(`📁 Folder check status: ${folderResponse.status}`);
+      
+      if (!folderResponse.ok) {
+        const folderError = await folderResponse.text();
+        console.error(`❌ Folder check failed:`, folderError);
+        throw new Error(`Folder not accessible: ${folderResponse.status}`);
+      }
+      
+      const folderData = await folderResponse.json();
+      console.log(`✅ Folder found:`, folderData);
+      
       const url = `${this.baseUrl}/files?` + new URLSearchParams({
         q: `'${folderId}' in parents and (mimeType contains 'image/')`,
         fields: 'files(id,name,mimeType,size,createdTime)',
