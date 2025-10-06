@@ -36,6 +36,8 @@ jobs:
       run: npm run build
       env:
         REACT_APP_GOOGLE_DRIVE_API_KEY: ${{ secrets.REACT_APP_GOOGLE_DRIVE_API_KEY }}
+        REACT_APP_GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.REACT_APP_GOOGLE_DRIVE_FOLDER_ID }}
+        REACT_APP_GOOGLE_DRIVE_SLIDESHOW_FOLDER_ID: ${{ secrets.REACT_APP_GOOGLE_DRIVE_SLIDESHOW_FOLDER_ID }}
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
