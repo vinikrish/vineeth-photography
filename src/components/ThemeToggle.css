@@ -1,9 +1,9 @@
 .theme-toggle {
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,7 +17,7 @@
 .theme-toggle:hover {
   border-color: rgba(255, 255, 255, 0.6);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.06);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -27,6 +27,8 @@
 
 .theme-toggle svg {
   transition: all 0.3s ease;
+  width: 20px;
+  height: 20px;
 }
 
 /* Light theme styles */

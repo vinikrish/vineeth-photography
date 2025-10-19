@@ -1,7 +1,7 @@
 .footer {
   background-color: black;
   text-align: center;
-  padding: 10px 0;
+  padding: 6px 0;
   transition: all 0.3s ease;
 }
 
@@ -13,8 +13,8 @@
 
 .social-icons a {
   color: inherit;
-  margin: 0 8px;
-  font-size: 1.3rem;
+  margin: 0 6px;
+  font-size: 1.1rem;
   transition: color 0.3s ease;
   text-decoration: none;
 }
@@ -25,7 +25,7 @@
 
 /* Theme Toggle in Footer */
 .theme-toggle-footer {
-  margin-top: 15px;
+  margin-top: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,23 +34,23 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .theme-toggle-footer {
-    margin-top: 12px;
+    margin-top: 5px;
   }
   
   .social-icons a {
-    margin: 0 6px;
-    font-size: 1.2rem;
+    margin: 0 5px;
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .theme-toggle-footer {
-    margin-top: 10px;
+    margin-top: 4px;
   }
   
   .social-icons a {
-    margin: 0 5px;
-    font-size: 1.1rem;
+    margin: 0 4px;
+    font-size: 0.95rem;
   }
 }
 

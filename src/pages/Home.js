@@ -37,9 +37,39 @@ function Home() {
         const driveImages = await googleDriveService.getSlideshowImages();
         
         if (driveImages && driveImages.length > 0) {
-          setImages(shuffleArray(driveImages));
-          setUsingGoogleDrive(true);
-          console.log('Using Google Drive images for slideshow (randomized order)');
+          // Resolve to the first successfully loading URL per image
+          const attemptLoad = (src) => new Promise((resolve) => {
+            if (!src) return resolve(false);
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = src;
+          });
+
+          const resolveImage = async (image) => {
+            const candidates = [image.src, image.ucUrl, image.thumbnailUrl].filter(Boolean);
+            for (const candidate of candidates) {
+              const ok = await attemptLoad(candidate);
+              if (ok) {
+                return { ...image, src: candidate };
+              }
+            }
+            return null;
+          };
+
+          // Limit resolution to first 12 images to avoid overwhelming the browser
+          const toResolve = driveImages.slice(0, 12);
+          const resolved = (await Promise.all(toResolve.map(resolveImage))).filter(Boolean);
+
+          if (resolved.length > 0) {
+            console.log(`Using Google Drive images (${resolved.length}/${toResolve.length} loaded)`);
+            setImages(shuffleArray(resolved));
+            setUsingGoogleDrive(true);
+          } else {
+            console.warn('No Drive images loaded; falling back to local');
+            setImages(shuffleArray(localImages));
+            setUsingGoogleDrive(false);
+          }
         } else {
           // Fallback to local images
           setImages(shuffleArray(localImages));
@@ -111,7 +141,20 @@ function Home() {
             className={`slideshow-image ${isActive ? 'active' : ''} ${isPrevious ? 'previous' : ''}`}
             onError={(e) => {
               console.error('Failed to load image:', image.src);
-              // Hide broken images
+              // Ordered fallbacks: alt=media -> uc view -> thumbnail
+              if (usingGoogleDrive) {
+                if (image.ucUrl && e.target.src === image.src) {
+                  console.log('Retrying with uc view:', image.ucUrl);
+                  e.target.src = image.ucUrl;
+                  return;
+                }
+                if (image.thumbnailUrl && (e.target.src === image.ucUrl || e.target.src === image.src)) {
+                  console.log('Retrying with thumbnail:', image.thumbnailUrl);
+                  e.target.src = image.thumbnailUrl;
+                  return;
+                }
+              }
+              // Hide if fallback also fails
               e.target.style.display = 'none';
             }}
           />

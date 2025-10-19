@@ -2,7 +2,16 @@ body, html, #root {
   margin: 0;
   padding: 0;
   height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Theme-aware backgrounds and default text color */
+body.dark-theme, .dark-theme #root {
   background-color: #000;
   color: #ccc;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body.light-theme, .light-theme #root {
+  background-color: #fff;
+  color: #333;
 }
