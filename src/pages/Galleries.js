@@ -40,7 +40,7 @@ function getRandomImageFromFolder(folderContent) {
   const allImages = [];
   
   function collectImages(obj) {
-    Object.entries(obj).forEach(([key, value]) => {
+    Object.entries(obj).forEach(([, value]) => {
       if (typeof value === 'string') {
         // This is an image file
         allImages.push(value);
@@ -64,7 +64,7 @@ function getRandomImageFromFolder(folderContent) {
 // Collect up to `limit` images from a nested folder structure
 function collectImagesWithLimit(obj, limit, acc = []) {
   if (!obj || acc.length >= limit) return acc;
-  for (const [key, value] of Object.entries(obj)) {
+  for (const [, value] of Object.entries(obj)) {
     if (acc.length >= limit) break;
     if (typeof value === 'string') {
       acc.push(value);
@@ -97,6 +97,8 @@ function getLocalPreviewForFolder(folderName) {
 
 function Galleries() {
   const [path, setPath] = useState([]);
+  const currentPathKey = path.join('/');
+  
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeStructure, setActiveStructure] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,18 +163,16 @@ function Galleries() {
           setActiveStructure(driveTree);
           setUsingDrive(true);
         } else if (!cancelled) {
-          // Fallback: if full tree fails, ensure we at least have Drive root listing
-          if (!driveStructure) {
-            const rootFolders = await googleDriveService.getGalleryFolders();
-            if (rootFolders && rootFolders.length > 0) {
-              const minimalDrive = {};
-              for (const f of rootFolders) {
-                if ((f.name || '').toLowerCase() === 'slideshow') continue; // safety
-                minimalDrive[f.name] = {};
-              }
-              setDriveStructure(minimalDrive);
-              setUsingDrive(true);
+          // Fallback: ensure we at least have Drive root listing
+          const rootFolders = await googleDriveService.getGalleryFolders();
+          if (rootFolders && rootFolders.length > 0) {
+            const minimalDrive = {};
+            for (const f of rootFolders) {
+              if ((f.name || '').toLowerCase() === 'slideshow') continue; // safety
+              minimalDrive[f.name] = {};
             }
+            setDriveStructure(prev => prev || minimalDrive);
+            setUsingDrive(true);
           }
         }
       } catch (err) {
@@ -221,7 +221,7 @@ function Galleries() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path.join('/'), usingDrive]);
+  }, [currentPathKey, usingDrive]);
 
   // Prefetch fast preview thumbnails for immediate subfolders on navigation
   useEffect(() => {
@@ -234,7 +234,7 @@ function Galleries() {
         const subs = await googleDriveService.getSubfolders(parentId);
         const cacheRaw = sessionStorage.getItem('folderPreviewCache');
         const cache = cacheRaw ? JSON.parse(cacheRaw) : {};
-        const basePath = path.join('/');
+        const basePath = currentPathKey;
         const toFetch = [];
         const updates = {};
         for (const s of subs) {
@@ -272,7 +272,7 @@ function Galleries() {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usingDrive, path.join('/')]);
+  }, [usingDrive, currentPathKey]);
 
   const localDir = getCurrentDirectory(localGalleryStructure || {}, path);
   const driveDir = getCurrentDirectory(driveStructure || {}, path);
@@ -299,10 +299,10 @@ function Galleries() {
   }, [isLoading, path.length, activeStructure]);
 
   const folders = entries
-    .filter(([key, value]) => typeof value === 'object')
+    .filter(([, value]) => typeof value === 'object')
     // Safety: exclude any folder named 'slideshow'
     .filter(([key]) => key.toLowerCase() !== 'slideshow');
-  const images = entries.filter(([key, value]) => typeof value === 'string');
+  const images = entries.filter(([, value]) => typeof value === 'string');
 
   // Progressively render images in a folder to improve perceived performance
   useEffect(() => {
@@ -323,7 +323,7 @@ function Galleries() {
     }, intervalMs);
     return () => clearInterval(timer);
     // Depend on images length and path to restart on navigation
-  }, [images.length, path.join('/')]);
+  }, [images.length, currentPathKey]);
 
   // Derive candidate URLs for Drive image IDs; prefer thumbnail first, then UC view
   const deriveDriveCandidates = (urlOrPath) => {
