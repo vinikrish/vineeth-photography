@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/vineeth-photography/static/css/main.7eb7fe5d.css",
-    "main.js": "/vineeth-photography/static/js/main.e5feb520.js",
+    "main.js": "/vineeth-photography/static/js/main.1e9a88f4.js",
     "static/media/Clay-colored Leaf Beetle.jpg": "/vineeth-photography/static/media/Clay-colored Leaf Beetle.8dd94cac87468f9b59b7.jpg",
     "static/media/Flamingstar and Tadpole Nebula.jpg": "/vineeth-photography/static/media/Flamingstar and Tadpole Nebula.4fe5c0e13ca21a020dcc.jpg",
     "static/media/SH2-284jpg.jpg": "/vineeth-photography/static/media/SH2-284jpg.0754867efbb3a3765db1.jpg",
@@ -34,10 +34,10 @@
     "static/media/bkp_icon_1.jpg": "/vineeth-photography/static/media/bkp_icon_1.34e2c2ef299269a19084.jpg",
     "index.html": "/vineeth-photography/index.html",
     "main.7eb7fe5d.css.map": "/vineeth-photography/static/css/main.7eb7fe5d.css.map",
-    "main.e5feb520.js.map": "/vineeth-photography/static/js/main.e5feb520.js.map"
+    "main.1e9a88f4.js.map": "/vineeth-photography/static/js/main.1e9a88f4.js.map"
   },
   "entrypoints": [
     "static/css/main.7eb7fe5d.css",
-    "static/js/main.e5feb520.js"
+    "static/js/main.1e9a88f4.js"
   ]
 }
