@@ -388,6 +388,39 @@ class GoogleDriveService {
     return results;
   }
 
+  // Prefer an explicit icon file (icon.jpg or icon.jpeg) in a folder
+  async getIconFromFolder(folderId) {
+    try {
+      const params = new URLSearchParams({
+        q: `'${folderId}' in parents and (mimeType contains 'image/') and (name='icon.jpg' or name='icon.jpeg') and trashed=false`,
+        fields: 'files(id,name,mimeType,size,createdTime)',
+        orderBy: 'name',
+        pageSize: '1',
+        key: this.apiKey
+      });
+      const url = `${this.baseUrl}/files?${params.toString()}`;
+      const response = await fetch(url, {
+        referrerPolicy: 'origin',
+        headers: { 'Referer': window.location.origin }
+      });
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(`Icon list failed: ${response.status} ${response.statusText} - ${txt}`);
+      }
+      const data = await response.json();
+      const f = (data.files || [])[0] || null;
+      return f ? {
+        id: f.id,
+        name: f.name,
+        ucUrl: `https://drive.google.com/uc?export=view&id=${f.id}`,
+        thumbUrl: `https://drive.google.com/thumbnail?id=${f.id}&sz=w512`
+      } : null;
+    } catch (err) {
+      console.warn('getIconFromFolder error', err);
+      return null;
+    }
+  }
+
   // Get a single preview image (fast) from a folder
   async getFirstImageFromFolder(folderId) {
     try {
@@ -412,7 +445,7 @@ class GoogleDriveService {
         id: f.id,
         name: f.name,
         ucUrl: `https://drive.google.com/uc?export=view&id=${f.id}`,
-        thumbUrl: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1024`
+        thumbUrl: `https://drive.google.com/thumbnail?id=${f.id}&sz=w512`
       } : null;
     } catch (err) {
       console.warn('getFirstImageFromFolder error', err);

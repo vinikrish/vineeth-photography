@@ -195,15 +195,27 @@
 }
 
 .overlay-image {
+  /* Fill viewport and stack absolutely to avoid any layout jump */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
-  width: auto;
-  height: auto;
   object-fit: contain;
   cursor: default;
   display: block;
+  border: none;
+  outline: none;
+  transition: opacity 180ms ease;
+  pointer-events: none; /* ensure arrows and close button remain clickable */
 }
 
+.overlay-current { opacity: 1; }
+.overlay-next { opacity: 0; }
 .close-button {
   position: absolute;
   top: -20px;
@@ -214,7 +226,8 @@
   font-size: 2rem;
   font-weight: 300;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 1101;
+  pointer-events: auto;
   padding: 0;
   width: 40px;
   height: 40px;
@@ -236,11 +249,13 @@
   transform: translateY(-50%);
   background: rgba(0, 0, 0, 0.3);
   border: none;
+  outline: none;
   color: rgba(255, 255, 255, 0.8);
   font-size: 2.5rem;
   font-weight: 300;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 1100;
+  pointer-events: auto;
   padding: 0;
   width: 50px;
   height: 50px;
@@ -252,6 +267,11 @@
   line-height: 1;
   user-select: none;
   backdrop-filter: blur(5px);
+}
+
+.nav-button:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 .nav-button:hover {
@@ -309,4 +329,110 @@
     rgba(0,0,0,0.08) 50%,
     rgba(0,0,0,0.04) 75%
   );
+}
+
+/* Top loading progress bar */
+.loading-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1001;
+  padding: 0;
+}
+
+.progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4A90E2, #50E3C2);
+  transition: width 180ms ease;
+}
+
+.loading-bar.indeterminate .progress-fill {
+  width: 30%;
+  animation: progress-slide 1s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-80%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(120%); }
+}
+
+.light-theme .progress-track {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.light-theme .progress-fill {
+  background: linear-gradient(90deg, #4A90E2, #50E3C2);
+}
+
+/* Overlay loading indicator */
+.overlay-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 56px;
+  height: 56px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: overlay-spin 0.9s linear infinite;
+}
+
+@keyframes overlay-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Overlay navigation: disabled state styling */
+.nav-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Overlay progress bar shown during navigation preload */
+.overlay-progress {
+  position: absolute;
+  top: 12px;
+  left: 48px;
+  right: 48px;
+  z-index: 1100;
+}
+.overlay-progress .progress-track {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.25);
+  overflow: hidden;
+}
+.overlay-progress .progress-fill {
+  height: 100%;
+  background: rgba(255,255,255,0.85);
+  width: 28%;
+  animation: progress-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(300%); }
 }

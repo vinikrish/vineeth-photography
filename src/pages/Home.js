@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import './Home.css';
 import googleDriveService from '../services/googleDriveService';
 
@@ -22,11 +22,53 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-function Home() {
+export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [images, setImages] = useState(localImages); // Start with local images
   const [isLoading, setIsLoading] = useState(true);
   const [usingGoogleDrive, setUsingGoogleDrive] = useState(false);
+
+  // Fullscreen overlay state
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [overlaySrc, setOverlaySrc] = useState(null);
+  const [overlayAlt, setOverlayAlt] = useState('');
+  const [overlayCandidates, setOverlayCandidates] = useState([]);
+  const [overlayReady, setOverlayReady] = useState(false);
+
+  const deriveOverlayCandidates = useCallback((image) => {
+    if (!image) return [];
+    // For Drive, prefer uc view first, then high-res thumbnail
+    if (usingGoogleDrive) {
+      const uc = image.ucUrl || image.src;
+      const thumb = image.thumbnailUrl;
+      return [uc, thumb].filter(Boolean);
+    }
+    // Local image
+    return [image.src].filter(Boolean);
+  }, [usingGoogleDrive]);
+
+  const openOverlay = useCallback((image) => {
+    const cands = deriveOverlayCandidates(image);
+    setOverlayCandidates(cands);
+    setOverlaySrc(null);
+    setOverlayAlt(image.alt || image.name || '');
+    setOverlayReady(false);
+    setOverlayOpen(true);
+    // Preload first candidate, fallback to next if it fails
+    let i = 0;
+    const tryNext = () => {
+      const url = cands[i++];
+      if (!url) return;
+      const img = new Image();
+      img.onload = () => {
+        setOverlaySrc(url);
+        setOverlayReady(true);
+      };
+      img.onerror = tryNext;
+      img.src = url;
+    };
+    tryNext();
+  }, [deriveOverlayCandidates]);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -107,6 +149,19 @@ function Home() {
     };
   }, [images.length]);
 
+  // Close overlay with Escape
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && overlayOpen) {
+        setOverlayOpen(false);
+        setOverlaySrc(null);
+        setOverlayReady(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [overlayOpen]);
+
   if (isLoading) {
     return (
       <div className="slideshow-container">
@@ -141,7 +196,7 @@ function Home() {
             className={`slideshow-image ${isActive ? 'active' : ''} ${isPrevious ? 'previous' : ''}`}
             onError={(e) => {
               console.error('Failed to load image:', image.src);
-              // Ordered fallbacks: alt=media -> uc view -> thumbnail
+              // Ordered fallbacks: uc view -> thumbnail
               if (usingGoogleDrive) {
                 if (image.ucUrl && e.target.src === image.src) {
                   console.log('Retrying with uc view:', image.ucUrl);
@@ -157,11 +212,47 @@ function Home() {
               // Hide if fallback also fails
               e.target.style.display = 'none';
             }}
+            onClick={() => openOverlay(image)}
           />
         );
       })}
+
+      {overlayOpen && (
+        <div className="home-overlay" onClick={() => { setOverlayOpen(false); setOverlaySrc(null); setOverlayReady(false); }}>
+          <div className="home-overlay-content" onClick={(e) => e.stopPropagation()}>
+            <button className="home-close-button" aria-label="Close" onClick={() => { setOverlayOpen(false); setOverlaySrc(null); setOverlayReady(false); }}>
+              ×
+            </button>
+            {(!overlayReady) && (
+              <div className="home-overlay-loading"><div className="spinner" /></div>
+            )}
+            {overlaySrc && (
+              <img
+                src={overlaySrc}
+                alt={overlayAlt}
+                className="home-overlay-image"
+                onError={(e) => {
+                  // Hide broken icon immediately
+                  e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                  // Try next candidate
+                  const idx = overlayCandidates.indexOf(overlaySrc);
+                  const next = idx >= 0 ? overlayCandidates[idx + 1] : overlayCandidates[1];
+                  let i = overlayCandidates.indexOf(next);
+                  const tryNext = () => {
+                    const url = overlayCandidates[i++];
+                    if (!url) return;
+                    const img = new Image();
+                    img.onload = () => { setOverlaySrc(url); setOverlayReady(true); };
+                    img.onerror = tryNext;
+                    img.src = url;
+                  };
+                  tryNext();
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default Home;
