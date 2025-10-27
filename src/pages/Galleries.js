@@ -4,9 +4,7 @@ import './Galleries.css';
 import googleDriveService from '../services/googleDriveService';
 const PREVIEW_CACHE_KEY = 'folderPreviewCacheV2';
 const PREVIEW_CACHE_TTL_MS = 1000 * 60 * 60 * 72; // 72 hours
-const PREFETCH_INITIAL_LIMIT = 8; // prefetch only first N subfolders immediately
 const PREFETCH_CONCURRENCY = 4;   // concurrent preview fetches
-const PREFETCH_OBSERVER_ROOT_MARGIN = '250px'; // start fetching slightly before entering viewport
 const OVERLAY_PREFETCH_LIMIT = 60; // prefetch up to N images per folder
 const OVERLAY_PREFETCH_CONCURRENCY = 4; // concurrent overlay prefetch
 
@@ -91,25 +89,7 @@ function collectImagesWithLimit(obj, limit, acc = []) {
   return acc;
 }
 
-// Prefer local asset for root folder preview, if available
-function getLocalPreviewForFolder(folderName) {
-  const localRoot = getCurrentDirectory(localGalleryStructure || {}, []);
-  const folderContent = localRoot ? localRoot[folderName] : null;
-  if (!folderContent) return null;
-  // STRICT: prefer icon.jpg or icon.jpeg only
-  const iconEntry = Object.entries(folderContent).find(
-    ([name, value]) => typeof value === 'string' && name.toLowerCase() === 'icon.jpg'
-  ) || Object.entries(folderContent).find(
-    ([name, value]) => typeof value === 'string' && name.toLowerCase() === 'icon.jpeg'
-  );
-  if (iconEntry) return iconEntry[1];
-  // Fallback for root if icon is missing
-  const directImage = Object.entries(folderContent).find(
-    ([name, value]) => typeof value === 'string'
-  );
-  const previewImageSrc = directImage ? directImage[1] : getRandomImageFromFolder(folderContent);
-  return previewImageSrc || null;
-}
+
 
 // Prefer local icon for any folder path, if available
 function getLocalIconForPath(pathParts) {
@@ -487,7 +467,7 @@ function Galleries() {
     setSelectedImage({ src: imagePath, alt: '' });
 
     console.debug('[Galleries] nav set', { newIndex, fileName });
-  }, [selectedImage, images, selectedIndex, sameImage]);
+  }, [selectedImage, images, sameImage]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -541,7 +521,9 @@ function Galleries() {
         const url = queue.shift();
         running++;
         const img = new Image();
+        // eslint-disable-next-line no-loop-func
         img.onload = () => { running--; pump(); };
+        // eslint-disable-next-line no-loop-func
         img.onerror = () => { running--; pump(); };
         img.src = url;
       }
@@ -876,7 +858,7 @@ function Galleries() {
                   {displaySrc && (
                     <img
                       src={displaySrc}
-                      alt=""
+                      alt={overlayAlt || ''}
                       className="overlay-image overlay-current"
                       onError={(e) => {
                         // Immediately hide browser broken icon
@@ -904,7 +886,7 @@ function Galleries() {
                   {nextOverlaySrc && (
                     <img
                       src={nextOverlaySrc}
-                      alt=""
+                      alt={nextOverlayAlt || ''}
                       className="overlay-image overlay-next"
                       style={{opacity: nextReady ? 1 : 0}}
                       onTransitionEnd={() => {
