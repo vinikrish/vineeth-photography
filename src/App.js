@@ -10,8 +10,8 @@ import Galleries from './pages/Galleries';
 import './App.css';
 
 function App() {
-  // Use basename only for GitHub Pages deployment, not for local development
-  const basename = process.env.NODE_ENV === 'production' ? '/vineeth-photography' : '';
+  // Use basename only for GitHub Pages deployment, not for local development or custom domain
+  const basename = process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io') ? '/vineeth-photography' : '';
   
   return (
     <ThemeProvider>

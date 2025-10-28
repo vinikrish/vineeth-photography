@@ -537,8 +537,8 @@ function Galleries() {
   const getShareLink = useCallback(() => {
     // Build a site URL that reproduces the current folder and image index
     try {
-      // Use the correct base path for production (GitHub Pages) vs development
-      const basePath = process.env.NODE_ENV === 'production' ? '/vineeth-photography' : '';
+      // Use the correct base path for GitHub Pages deployment, not for custom domain or local development
+      const basePath = process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io') ? '/vineeth-photography' : '';
       const url = new URL(`${basePath}/galleries`, window.location.origin);
       const pKey = path.join('/');
       if (pKey) url.searchParams.set('p', pKey);
@@ -548,7 +548,7 @@ function Galleries() {
       if (idx != null && idx >= 0) url.searchParams.set('i', String(idx));
       return url.toString();
     } catch (e) {
-      const basePath = process.env.NODE_ENV === 'production' ? '/vineeth-photography' : '';
+      const basePath = process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io') ? '/vineeth-photography' : '';
       return window.location.origin + `${basePath}/galleries`;
     }
   }, [path, selectedIndex, images, selectedImage, sameImage]);
