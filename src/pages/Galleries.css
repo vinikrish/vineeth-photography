@@ -192,6 +192,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  /* no bottom padding; do not force the image upward */
 }
 
 .overlay-image {
@@ -200,7 +201,7 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 0; /* allow full vertical centering without reducing top space */
   width: 100%;
   height: 100%;
   max-width: 100%;
@@ -435,4 +436,98 @@
   0% { transform: translateX(-100%); }
   50% { transform: translateX(150%); }
   100% { transform: translateX(300%); }
+}
+
+/* Share overlay footer and modal */
+.overlay-footer {
+  position: absolute;
+  top: 28px; /* sits just below the close button (which is at -20px) */
+  right: -20px;
+  transform: none;
+  z-index: 1102;
+  pointer-events: auto;
+}
+
+.share-button {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: #6b6b6b; /* icon color */
+  border: 1px solid rgba(0,0,0,0.06);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12), 0 10px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.35);
+  cursor: pointer;
+  overflow: visible;
+}
+
+
+.share-button:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16), 0 12px 28px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+
+.share-icon { display: block; width: 22px; height: 22px; }
+
+/* Modal tweaks positioned near the top-right share button */
+.share-modal { top: 72px; right: 20px; }
+.copy-button,
+.close-share {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.share-button:hover,
+.copy-button:hover,
+.close-share:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.share-modal {
+  position: absolute;
+  top: 72px;
+  right: 20px;
+  left: auto;
+  transform: none;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  z-index: 1103;
+  max-width: 90%;
+}
+
+.share-modal-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.share-modal-body {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-url-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.share-modal-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
 }

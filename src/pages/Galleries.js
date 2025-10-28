@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom';
 import './Galleries.css';
 import googleDriveService from '../services/googleDriveService';
+import { ReactComponent as ShareIcon } from '../assets/icons/share.svg';
 const PREVIEW_CACHE_KEY = 'folderPreviewCacheV2';
 const PREVIEW_CACHE_TTL_MS = 1000 * 60 * 60 * 72; // 72 hours
 const PREFETCH_CONCURRENCY = 4;   // concurrent preview fetches
@@ -125,6 +126,34 @@ function Galleries() {
       setPath([]);
     }
   }, [location.pathname, location.state?.resetPath]);
+
+  // Open to a shared folder path if provided via query param `p`
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const p = params.get('p');
+    if (p != null) {
+      const next = p.split('/').filter(Boolean);
+      const nextKey = next.join('/');
+      if (nextKey !== currentPathKey) {
+        setPath(next);
+      }
+    }
+  }, [location.search, currentPathKey]);
+
+  // Once images for the folder are available, open the shared image index `i`
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const iParam = params.get('i');
+    if (iParam == null) return;
+    const idx = parseInt(iParam, 10);
+    if (!Number.isFinite(idx)) return;
+    if (images.length === 0) return;
+    if (idx < 0 || idx >= images.length) return;
+    if (selectedIndex === idx && selectedImage) return;
+    const [, imagePath] = images[idx];
+    setSelectedIndex(idx);
+    setSelectedImage({ src: imagePath, alt: '' });
+  }, [images, location.search, selectedIndex, selectedImage]);
 
   // Render root quickly with local assets, then load Drive structure in background
   useEffect(() => {
@@ -498,7 +527,58 @@ function Galleries() {
   const [nextOverlaySrc, setNextOverlaySrc] = useState(null);
   const [nextOverlayAlt, setNextOverlayAlt] = useState(null);
   const [nextReady, setNextReady] = useState(false);
+  // Share modal state
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [copied, setCopied] = useState(false);
   const overlayPrefetchedRef = useRef(new Set());
+
+  // Share helpers
+  const getShareLink = useCallback(() => {
+    // Build a site URL that reproduces the current folder and image index
+    try {
+      const url = new URL('/galleries', window.location.origin);
+      const pKey = path.join('/');
+      if (pKey) url.searchParams.set('p', pKey);
+      const idx = selectedIndex != null
+        ? selectedIndex
+        : images.findIndex(([fileName, imagePath]) => sameImage(imagePath, selectedImage?.src));
+      if (idx != null && idx >= 0) url.searchParams.set('i', String(idx));
+      return url.toString();
+    } catch (e) {
+      return window.location.origin + '/galleries';
+    }
+  }, [path, selectedIndex, images, selectedImage, sameImage]);
+
+  const openShare = useCallback(() => {
+    if (!selectedImage) return;
+    const link = getShareLink();
+    setShareUrl(link);
+    setShareOpen(true);
+    setCopied(false);
+  }, [selectedImage, getShareLink]);
+
+  const closeShare = useCallback(() => {
+    setShareOpen(false);
+    setCopied(false);
+  }, []);
+
+  const copyShareUrl = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch (e) {
+      // Fallback approach
+      const textarea = document.createElement('textarea');
+      textarea.value = shareUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); setCopied(true); } catch {}
+      document.body.removeChild(textarea);
+      setTimeout(() => setCopied(false), 1400);
+    }
+  }, [shareUrl]);
 
   // Prefetch overlay preview URLs for all images in the current folder
   useEffect(() => {
@@ -931,6 +1011,25 @@ function Galleries() {
                 </div>
               );
             })()}
+
+            <div className="overlay-footer">
+               <button className="share-button" aria-label="Share" onClick={(e) => { e.stopPropagation(); openShare(); }}>
+                 <ShareIcon className="share-icon" />
+               </button>
+             </div>
+
+            {shareOpen && (
+              <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="share-modal-header">Share this image</div>
+                <div className="share-modal-body">
+                  <input type="text" readOnly value={shareUrl} className="share-url-input" onFocus={(e)=>e.target.select()} />
+                  <button className="copy-button" onClick={copyShareUrl}>{copied ? 'Copied!' : 'Copy'}</button>
+                </div>
+                <div className="share-modal-actions">
+                  <button className="close-share" onClick={closeShare}>Close</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
