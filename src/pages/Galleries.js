@@ -537,7 +537,9 @@ function Galleries() {
   const getShareLink = useCallback(() => {
     // Build a site URL that reproduces the current folder and image index
     try {
-      const url = new URL('/galleries', window.location.origin);
+      // Use the correct base path for production (GitHub Pages) vs development
+      const basePath = process.env.NODE_ENV === 'production' ? '/vineeth-photography' : '';
+      const url = new URL(`${basePath}/galleries`, window.location.origin);
       const pKey = path.join('/');
       if (pKey) url.searchParams.set('p', pKey);
       const idx = selectedIndex != null
@@ -546,7 +548,8 @@ function Galleries() {
       if (idx != null && idx >= 0) url.searchParams.set('i', String(idx));
       return url.toString();
     } catch (e) {
-      return window.location.origin + '/galleries';
+      const basePath = process.env.NODE_ENV === 'production' ? '/vineeth-photography' : '';
+      return window.location.origin + `${basePath}/galleries`;
     }
   }, [path, selectedIndex, images, selectedImage, sameImage]);
 
