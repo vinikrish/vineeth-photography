@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redirecting…</title>
+  <script>
+    (function() {
+      var l = window.location;
+      var base = '/vineeth-photography';
+      // Remove base from pathname to get app route
+      var path = l.pathname.indexOf(base) === 0 ? l.pathname.slice(base.length) : l.pathname;
+      // Ensure leading slash for app route
+      if (path.charAt(0) !== '/') path = '/' + path;
+      var dest = base + '/?redirect=' + encodeURIComponent(path + l.search + l.hash);
+      l.replace(dest);
+    })();
+  </script>
+</head>
+<body></body>
+</html>

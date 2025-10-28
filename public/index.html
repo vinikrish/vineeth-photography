@@ -7,6 +7,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="referrer" content="no-referrer" />
   <title>Vineeth Radhakrishnan Photography</title>
+  <script>
+    // Restore deep link path if redirected from 404.html on GitHub Pages
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var redirect = params.get('redirect');
+        if (redirect) {
+          var base = window.location.pathname.indexOf('/vineeth-photography') === 0 ? '/vineeth-photography' : '';
+          var target = base + (redirect.startsWith('/') ? redirect : '/' + redirect);
+          window.history.replaceState(null, '', target);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>
