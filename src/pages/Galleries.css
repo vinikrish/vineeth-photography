@@ -418,6 +418,7 @@
   left: 48px;
   right: 48px;
   z-index: 1100;
+  pointer-events: none; /* do not block clicks on buttons/images */
 }
 .overlay-progress .progress-track {
   height: 3px;

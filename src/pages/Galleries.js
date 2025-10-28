@@ -885,18 +885,23 @@ function Galleries() {
       )}
 
       {selectedImage && (
-        <div className="image-overlay" onClick={() => { setSelectedImage(null); setSelectedIndex(null); }}>
-          <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={() => { setSelectedImage(null); setSelectedIndex(null); }}>
+        <div className="image-overlay" onClick={() => { setSelectedImage(null); setSelectedIndex(null); }} onPointerDown={() => { setSelectedImage(null); setSelectedIndex(null); }}>
+          <div className="overlay-content" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+            <button type="button" className="close-button" onClick={(e) => { e.stopPropagation(); setSelectedImage(null); setSelectedIndex(null); }} onPointerDown={(e) => { e.stopPropagation(); setSelectedImage(null); setSelectedIndex(null); }}>
               ×
             </button>
             
             {canNavigatePrev && (
               <button 
+                type="button"
                 className="nav-button nav-button-prev" 
                 aria-label="Previous image"
                 disabled={Boolean(nextOverlaySrc && !nextReady)}
                 onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   navigateImage('prev');
                 }}
@@ -907,10 +912,15 @@ function Galleries() {
             
             {canNavigateNext && (
               <button 
+                type="button"
                 className="nav-button nav-button-next" 
                 aria-label="Next image"
                 disabled={Boolean(nextOverlaySrc && !nextReady)}
                 onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+                onPointerDown={(e) => {
                   e.stopPropagation();
                   navigateImage('next');
                 }}
@@ -1016,20 +1026,20 @@ function Galleries() {
             })()}
 
             <div className="overlay-footer">
-               <button className="share-button" aria-label="Share" onClick={(e) => { e.stopPropagation(); openShare(); }}>
+               <button type="button" className="share-button" aria-label="Share" onClick={(e) => { e.stopPropagation(); openShare(); }} onPointerDown={(e) => { e.stopPropagation(); openShare(); }}>
                  <ShareIcon className="share-icon" />
                </button>
              </div>
 
             {shareOpen && (
-              <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="share-modal" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                 <div className="share-modal-header">Share this image</div>
                 <div className="share-modal-body">
                   <input type="text" readOnly value={shareUrl} className="share-url-input" onFocus={(e)=>e.target.select()} />
-                  <button className="copy-button" onClick={copyShareUrl}>{copied ? 'Copied!' : 'Copy'}</button>
+                  <button type="button" className="copy-button" onClick={copyShareUrl} onPointerDown={copyShareUrl}>{copied ? 'Copied!' : 'Copy'}</button>
                 </div>
                 <div className="share-modal-actions">
-                  <button className="close-share" onClick={closeShare}>Close</button>
+                  <button type="button" className="close-share" onClick={closeShare} onPointerDown={closeShare}>Close</button>
                 </div>
               </div>
             )}
