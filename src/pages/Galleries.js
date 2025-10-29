@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Galleries.css';
 import googleDriveService from '../services/googleDriveService';
 import { ReactComponent as ShareIcon } from '../assets/icons/share.svg';
@@ -117,6 +117,7 @@ function Galleries() {
   const [folderPreviews, setFolderPreviews] = useState({});
   const [loadingBar, setLoadingBar] = useState({ active: false, mode: 'indeterminate', progress: 0 });
   const location = useLocation();
+  const navigate = useNavigate();
   const [images, setImages] = useState([]);
 
   // Reset path when navigating to galleries from other pages
@@ -140,20 +141,34 @@ function Galleries() {
     }
   }, [location.search, currentPathKey]);
 
-  // Once images for the folder are available, open the shared image index `i`
+  // If a deep-link includes an id or a folder path, prefer Drive immediately
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const hasId = params.get('id');
+    const hasP = params.get('p');
+    if ((hasId || hasP) && !usingDrive) {
+      setUsingDrive(true);
+    }
+  }, [location.search, usingDrive]);
+
+  // Parse selectedIndex from URL immediately for deep-links
   useEffect(() => {
     const params = new URLSearchParams(location.search || '');
     const iParam = params.get('i');
-    if (iParam == null) return;
+    if (iParam == null) {
+      setSelectedIndex(null);
+      return;
+    }
     const idx = parseInt(iParam, 10);
-    if (!Number.isFinite(idx)) return;
-    if (images.length === 0) return;
-    if (idx < 0 || idx >= images.length) return;
-    if (selectedIndex === idx && selectedImage) return;
-    const [, imagePath] = images[idx];
+    if (!Number.isFinite(idx)) {
+      setSelectedIndex(null);
+      return;
+    }
     setSelectedIndex(idx);
-    setSelectedImage({ src: imagePath, alt: '' });
-  }, [images, location.search, selectedIndex, selectedImage]);
+  }, [location.search]);
+
+  // Image open effect moved below getDriveId for correct initialization order
+  // See effect after sameImage definition.
 
   // Render root quickly with local assets, then load Drive structure in background
   useEffect(() => {
@@ -430,6 +445,42 @@ function Galleries() {
     return false;
   }, [getDriveId]);
 
+  // Once images are loaded, open the image; prefer stable id over index
+  useEffect(() => {
+    console.debug('[Galleries] open-by-param start', { imagesLen: images.length, selectedIndex, hasSelected: Boolean(selectedImage), search: location.search });
+    if (images.length === 0) return;
+
+    // Do not override when an image is already selected (e.g., via navigation)
+    if (selectedImage) {
+      console.debug('[Galleries] open-by-param skip: selectedImage already set');
+      return;
+    }
+
+    const params = new URLSearchParams(location.search || '');
+    const idParam = params.get('id');
+    if (idParam) {
+      const byIdIdx = images.findIndex(([fileName, imagePath]) => getDriveId(imagePath) === idParam);
+      console.debug('[Galleries] open-by-param id match', { idParam, byIdIdx });
+      if (byIdIdx >= 0) {
+        const [, imagePath] = images[byIdIdx];
+        console.debug('[Galleries] open-by-param set by id', { byIdIdx, imagePath });
+        setSelectedIndex(byIdIdx);
+        setSelectedImage({ src: imagePath, alt: '' });
+        return; // id wins over i
+      }
+      // If an id param is present but not found yet, wait for next images update rather than falling back to index
+      console.debug('[Galleries] open-by-param id not found; waiting for images to load');
+      return;
+    }
+
+    // Only use index when no id is provided
+    if (selectedIndex == null) return;
+    if (selectedIndex < 0 || selectedIndex >= images.length) return;
+    const [, imagePath] = images[selectedIndex];
+    console.debug('[Galleries] open-by-param set by index', { selectedIndex, imagePath });
+    setSelectedImage({ src: imagePath, alt: '' });
+  }, [images, selectedIndex, selectedImage, location.search, getDriveId, sameImage]);
+
   // For overlay/full-view, prefer full-resolution download first, then UC view, then thumbnail
   const deriveOverlayCandidates = useCallback((urlOrPath) => {
     if (typeof urlOrPath !== 'string') return [urlOrPath];
@@ -445,11 +496,11 @@ function Galleries() {
     }
 
     if (id) {
-      const dl = `https://drive.google.com/uc?export=download&id=${id}`;
       const view = `https://drive.google.com/uc?export=view&id=${id}`;
       const thumb = `https://drive.google.com/thumbnail?id=${id}&sz=w1024`;
-      // Restore order: full-res download first, then view, then thumbnail
-      return [dl, view, thumb];
+      const dl = `https://drive.google.com/uc?export=download&id=${id}`;
+      // Prefer view, then thumbnail; download last (often 403 without cookies)
+      return [view, thumb, dl];
     }
 
     // Fallback when no id could be parsed: revert to deriveDriveCandidates and reverse
@@ -463,40 +514,73 @@ function Galleries() {
   // removed nav lock to avoid stuck state
   // const navLockRef = useRef(false);
   const navigateImage = useCallback((direction) => {
-    if (!selectedImage || images.length === 0) return;
-    // if (navLockRef.current) return; // prevent rapid multi-clicks while loading
-    // navLockRef.current = true;
-
-    // Always resolve index by matching the active image src to the current list.
-    const currentIndex = images.findIndex(([fileName, imagePath]) => 
-      sameImage(imagePath, selectedImage.src)
-    );
-
-    console.debug('[Galleries] navigateImage', { direction, currentIndex, imagesLen: images.length });
-
-    let newIndex;
-
-    if (currentIndex < 0) {
-      newIndex = direction === 'next' ? 0 : images.length - 1;
-    } else if (direction === 'next') {
-      newIndex = (currentIndex + 1) % images.length;
-    } else {
-      newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    console.debug('[Galleries] navigateImage start', { direction, hasSelected: Boolean(selectedImage), imagesLen: images.length, selectedIndex });
+    if (!selectedImage) {
+      console.debug('[Galleries] navigateImage bail: no selectedImage');
+      return;
     }
-
-    const [fileName, imagePath] = images[newIndex];
-
-    // Prepare next state but keep current image visible until next preloads
+  
+    // For deep-links, we might not have images array populated yet, but we have selectedIndex from URL
+    if (images.length === 0 && selectedIndex == null) {
+      console.debug('[Galleries] navigateImage bail: no images and no selectedIndex');
+      return;
+    }
+  
+    let currentIndex = (selectedIndex != null)
+      ? selectedIndex
+      : images.findIndex(([fileName, imagePath]) => sameImage(imagePath, selectedImage.src));
+    if (currentIndex < 0) currentIndex = 0;
+  
+    let newIndex;
+    if (images.length > 0) {
+      // Normal case: use images array length for wrapping
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % images.length;
+      } else {
+        newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+      }
+      console.debug('[Galleries] navigateImage computed newIndex', { newIndex });
+    } else {
+      // Deep-link case: navigate based on selectedIndex even without images array
+      if (direction === 'next') {
+        newIndex = currentIndex + 1;
+      } else {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : 0;
+      }
+      console.debug('[Galleries] navigateImage deep-link URL update', { newIndex });
+      // Update URL to trigger image loading
+      const params = new URLSearchParams(location.search);
+      params.set('i', newIndex.toString());
+      window.history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+      return;
+    }
+  
+    const [, imagePath] = images[newIndex];
+  
+    // Immediately show the preview candidate of the next image
+    const cands = deriveOverlayCandidates(imagePath);
+    const preview = cands[1] || cands[0] || imagePath;
+    console.debug('[Galleries] navigateImage set overlay preview', { preview });
+    setOverlaySrc(preview);
+    setOverlayAlt('');
+  
+    // Reset next state for crossfade preloading
     setNextOverlaySrc(null);
     setNextOverlayAlt(null);
     setNextReady(false);
-    // Do NOT clear overlaySrc/Alt here; let the preload/crossfade effect handle the swap
-
+  
     setSelectedIndex(newIndex);
     setSelectedImage({ src: imagePath, alt: '' });
 
-    console.debug('[Galleries] nav set', { newIndex, fileName });
-  }, [selectedImage, images, sameImage]);
+    // Keep the URL in sync so deep-link effect won’t override selection
+    try {
+      const params = new URLSearchParams(location.search || '');
+      params.set('i', String(newIndex));
+      const newId = getDriveId(imagePath);
+      if (newId) params.set('id', newId);
+      window.history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+    } catch {}
+  }, [selectedImage, images, selectedIndex, sameImage, deriveOverlayCandidates, location, getDriveId]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -508,8 +592,17 @@ function Galleries() {
         } else if (e.key === 'ArrowRight') {
           navigateImage('next');
         } else if (e.key === 'Escape') {
+          console.debug('[Galleries] escape key pressed');
           setSelectedImage(null);
           setSelectedIndex(null);
+          // Clear URL params when closing via Escape key too
+          const params = new URLSearchParams(location.search);
+          if (params.has('id') || params.has('i')) {
+            console.debug('[Galleries] escape close: clearing URL params');
+            const p = params.get('p') || currentPathKey;
+            const to = p ? `${location.pathname}?p=${encodeURIComponent(p)}` : location.pathname;
+            navigate(to, { replace: true });
+          }
         }
       }
     };
@@ -518,8 +611,9 @@ function Galleries() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [selectedImage, navigateImage]);
 
-  const canNavigatePrev = selectedImage && images.length > 1;
-  const canNavigateNext = selectedImage && images.length > 1;
+  // Always enable navigation when an image is selected - deep-links may open overlay before images array is populated
+  const canNavigatePrev = Boolean(selectedImage);
+  const canNavigateNext = Boolean(selectedImage);
 
   // Preload and crossfade overlay image to avoid ugly placeholders during navigation
   const [overlaySrc, setOverlaySrc] = useState(null);
@@ -535,9 +629,8 @@ function Galleries() {
 
   // Share helpers
   const getShareLink = useCallback(() => {
-    // Build a site URL that reproduces the current folder and image index
+    // Build a site URL that reproduces the current folder and image selection
     try {
-      // Use the correct base path for GitHub Pages deployment, not for custom domain or local development
       const basePath = process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io') ? '/vineeth-photography' : '';
       const url = new URL(`${basePath}/galleries`, window.location.origin);
       const pKey = path.join('/');
@@ -545,13 +638,17 @@ function Galleries() {
       const idx = selectedIndex != null
         ? selectedIndex
         : images.findIndex(([fileName, imagePath]) => sameImage(imagePath, selectedImage?.src));
-      if (idx != null && idx >= 0) url.searchParams.set('i', String(idx));
+      if (idx != null && idx >= 0) {
+        url.searchParams.set('i', String(idx));
+        const driveId = getDriveId(images[idx]?.[1]);
+        if (driveId) url.searchParams.set('id', driveId);
+      }
       return url.toString();
     } catch (e) {
       const basePath = process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io') ? '/vineeth-photography' : '';
       return window.location.origin + `${basePath}/galleries`;
     }
-  }, [path, selectedIndex, images, selectedImage, sameImage]);
+  }, [path, selectedIndex, images, selectedImage, sameImage, getDriveId]);
 
   const openShare = useCallback(() => {
     if (!selectedImage) return;
@@ -641,7 +738,16 @@ function Galleries() {
         img.src = url;
       };
 
-      // Original order: try full first, then preview; show only once loaded
+      // Prefer preview (uc?view) first; download can 403
+      tryLoad(preview, (u) => {
+        if (!assigned) {
+          setOverlaySrc(u);
+          setOverlayAlt(selectedImage.alt);
+          assigned = true;
+        }
+      });
+
+      // Then attempt full-res download (may fail); if it succeeds, upgrade
       tryLoad(full, (u) => {
         if (!assigned) {
           setOverlaySrc(u);
@@ -654,14 +760,6 @@ function Galleries() {
         }
       });
 
-      tryLoad(preview, (u) => {
-        if (!assigned) {
-          setOverlaySrc(u);
-          setOverlayAlt(selectedImage.alt);
-          assigned = true;
-        }
-      });
-
       // As a last resort, try the original src
       tryLoad(direct, (u) => {
         if (!assigned) {
@@ -671,7 +769,7 @@ function Galleries() {
         }
       });
     } else {
-      // Navigation: race full and preview; show whichever loads first
+      // Navigation: prefer preview race, then fallback to direct; avoid download-first
       let assigned = false;
       const raceLoad = (url) => {
         if (!url) return;
@@ -686,9 +784,9 @@ function Galleries() {
         img.onerror = () => {};
         img.src = url;
       };
-      raceLoad(full);
       raceLoad(preview);
-      if (!full && !preview) {
+      raceLoad(full); // try upgrade if it loads
+      if (!preview && !full) {
         raceLoad(direct);
       }
     }
@@ -703,10 +801,11 @@ function Galleries() {
       [images[nextIndex]?.[1], images[prevIndex]?.[1]].forEach((p) => {
         if (!p) return;
         const nc = deriveOverlayCandidates(p);
-        const fullNext = nc[0];
-        if (fullNext) {
+        // Prefetch the preview (uc?view) which is reliably accessible
+        const previewNext = nc[0];
+        if (previewNext) {
           const pre = new Image();
-          pre.src = fullNext;
+          pre.src = previewNext;
         }
       });
     }
@@ -885,9 +984,34 @@ function Galleries() {
       )}
 
       {selectedImage && (
-        <div className="image-overlay" onClick={() => { setSelectedImage(null); setSelectedIndex(null); }} onPointerDown={() => { setSelectedImage(null); setSelectedIndex(null); }}>
+        <div className="image-overlay" onClick={() => { 
+          console.debug('[Galleries] overlay background clicked');
+          setSelectedImage(null); 
+          setSelectedIndex(null);
+          // Clear URL params when closing via background click too
+          const params = new URLSearchParams(location.search);
+          if (params.has('id') || params.has('i')) {
+            console.debug('[Galleries] overlay close: clearing URL params');
+            const p = params.get('p') || currentPathKey;
+            const to = p ? `${location.pathname}?p=${encodeURIComponent(p)}` : location.pathname;
+            navigate(to, { replace: true });
+          }
+        }}>
           <div className="overlay-content" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-            <button type="button" className="close-button" onClick={(e) => { e.stopPropagation(); setSelectedImage(null); setSelectedIndex(null); }} onPointerDown={(e) => { e.stopPropagation(); setSelectedImage(null); setSelectedIndex(null); }}>
+            <button type="button" className="close-button" onPointerUp={(e) => { 
+              console.debug('[Galleries] close button clicked', { hasSelectedImage: Boolean(selectedImage), currentPath: location.pathname, currentSearch: location.search });
+              e.stopPropagation(); 
+              setSelectedImage(null); 
+              setSelectedIndex(null);
+              // When opened via shared URL, navigate back to gallery root to ensure proper state
+              const params = new URLSearchParams(location.search);
+              if (params.has('id') || params.has('i')) {
+                console.debug('[Galleries] close: clearing URL params and navigating to gallery view');
+                const p = params.get('p') || currentPathKey;
+                const to = p ? `${location.pathname}?p=${encodeURIComponent(p)}` : location.pathname;
+                navigate(to, { replace: true });
+              }
+            }}>
               ×
             </button>
             
@@ -896,12 +1020,8 @@ function Galleries() {
                 type="button"
                 className="nav-button nav-button-prev" 
                 aria-label="Previous image"
-                disabled={Boolean(nextOverlaySrc && !nextReady)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateImage('prev');
-                }}
-                onPointerDown={(e) => {
+                onPointerUp={(e) => {
+                  console.debug('[Galleries] prev pointerup');
                   e.stopPropagation();
                   navigateImage('prev');
                 }}
@@ -915,12 +1035,8 @@ function Galleries() {
                 type="button"
                 className="nav-button nav-button-next" 
                 aria-label="Next image"
-                disabled={Boolean(nextOverlaySrc && !nextReady)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateImage('next');
-                }}
-                onPointerDown={(e) => {
+                onPointerUp={(e) => {
+                  console.debug('[Galleries] next pointerup');
                   e.stopPropagation();
                   navigateImage('next');
                 }}
@@ -931,8 +1047,8 @@ function Galleries() {
             
             {(() => {
               const overlayCands = deriveOverlayCandidates(selectedImage.src);
-              const overlayMatches = overlaySrc && sameImage(overlaySrc, selectedImage.src);
-              const displaySrc = (overlaySrc && overlayMatches) ? overlaySrc : (overlayCands[1] || overlayCands[0] || null);
+              // Always prefer overlaySrc when present; avoid strict matching that can fail on URL variants
+              const displaySrc = overlaySrc || overlayCands[1] || overlayCands[0] || null;
               const showSpinner = !displaySrc && !nextReady;
               const isNavLoading = Boolean(nextOverlaySrc && !nextReady);
               return (
@@ -1026,20 +1142,20 @@ function Galleries() {
             })()}
 
             <div className="overlay-footer">
-               <button type="button" className="share-button" aria-label="Share" onClick={(e) => { e.stopPropagation(); openShare(); }} onPointerDown={(e) => { e.stopPropagation(); openShare(); }}>
+               <button type="button" className="share-button" aria-label="Share" onClick={(e) => { e.stopPropagation(); openShare(); }}>
                  <ShareIcon className="share-icon" />
                </button>
              </div>
 
             {shareOpen && (
-              <div className="share-modal" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+              <div className="share-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="share-modal-header">Share this image</div>
                 <div className="share-modal-body">
                   <input type="text" readOnly value={shareUrl} className="share-url-input" onFocus={(e)=>e.target.select()} />
-                  <button type="button" className="copy-button" onClick={copyShareUrl} onPointerDown={copyShareUrl}>{copied ? 'Copied!' : 'Copy'}</button>
+                  <button type="button" className="copy-button" onClick={copyShareUrl}>{copied ? 'Copied!' : 'Copy'}</button>
                 </div>
                 <div className="share-modal-actions">
-                  <button type="button" className="close-share" onClick={closeShare} onPointerDown={closeShare}>Close</button>
+                  <button type="button" className="close-share" onClick={closeShare}>Close</button>
                 </div>
               </div>
             )}
