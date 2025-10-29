@@ -609,7 +609,7 @@ function Galleries() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [selectedImage, navigateImage]);
+  }, [selectedImage, navigateImage, location.pathname, location.search, currentPathKey, navigate]);
 
   // Always enable navigation when an image is selected - deep-links may open overlay before images array is populated
   const canNavigatePrev = Boolean(selectedImage);
