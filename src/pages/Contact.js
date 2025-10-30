@@ -49,7 +49,7 @@ function Contact() {
     <div className="contact-page">
       <p className="contact-subtext">I value your thoughts and feedback.</p>
       <p className="contact-subtext">
-        Please feel free to reach out using the form below — I’ll respond in a timely and professional manner.
+        Please feel free to reach out using the form below. I will respond in a timely manner.
       </p>
 
       <form ref={formRef} onSubmit={handleSubmit} className="contact-form">
