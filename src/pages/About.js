@@ -19,13 +19,22 @@ function About() {
       
       <div className="contact-description centered-text">
         <p>
-          I’m Vineeth Radhakrishnan, a nature photographer capturing the extraordinary beauty of our natural world for the last 8+ years. I have traveled across the United States with my camera gear, seeking out the perfect moments, from the intricate details of macro insects to the vast expanse of the Milky Way stretching across dark skies.
+          Vineeth Radhakrishnan is a nature photographer who has been capturing the extraordinary beauty of the natural world for over eight years. He has traveled extensively across the United States, seeking out perfect moments, from the intricate details of macro insects to the vast expanse of the Milky Way stretching across dark skies.
         </p>
         <p>
-          My photography journey spans diverse subjects: the graceful flight of birds, the fascinating world of macro insects with their extraordinary details and hidden beauty, the mesmerizing patterns of deep space, the raw power of waterfalls, the gentle flow of mountain streams, and the breathtaking vistas of untouched landscapes. Each photograph tells a story of patience, dedication, and an unwavering love for the natural world.
+          His photography journey spans diverse subjects: the graceful flight of birds, the fascinating world of macro insects with their extraordinary details and hidden beauty, the mesmerizing patterns of deep space, the raw power of waterfalls, the gentle flow of mountain streams, and the breathtaking vistas of untouched landscapes. Each photograph tells a story of patience, dedication, and an unwavering love for the natural world.
         </p>
+
+        <p>Vineeth’s work has been published internationally, with features in:</p>
+        <ul style={{ textAlign: 'left', display: 'inline-block' }}>
+          <li>Texas Parks and Wildlife (USA) — 3 times</li>
+          <li>Mathrubhumi Online (India) — 4 times</li>
+          <li>Wild Planet Magazine (UK) — 2 times</li>
+          <li>Mathrubhumi Yathra (India)</li>
+        </ul>
+
         <p>
-          Thank you for joining me on this visual journey through nature’s most captivating moments.
+          Thank you for joining in this visual journey through nature’s most captivating moments.
         </p>
       </div>
     </div>
