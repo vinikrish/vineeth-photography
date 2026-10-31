@@ -14,7 +14,8 @@
         var params = new URLSearchParams(window.location.search);
         var redirect = params.get('redirect');
         if (redirect) {
-          var base = window.location.pathname.indexOf('/vineeth-photography') === 0 ? '/vineeth-photography' : '';
+          // Only use /vineeth-photography base on GitHub Pages (github.io), not on custom domain
+          var base = window.location.hostname.indexOf('github.io') >= 0 ? '/vineeth-photography' : '';
           var target = base + (redirect.startsWith('/') ? redirect : '/' + redirect);
           window.history.replaceState(null, '', target);
         }

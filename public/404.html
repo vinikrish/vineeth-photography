@@ -7,7 +7,8 @@
   <script>
     (function() {
       var l = window.location;
-      var base = '/vineeth-photography';
+      // Only use /vineeth-photography base on GitHub Pages (github.io), not on custom domain
+      var base = l.hostname.indexOf('github.io') >= 0 ? '/vineeth-photography' : '';
       // Remove base from pathname to get app route
       var path = l.pathname.indexOf(base) === 0 ? l.pathname.slice(base.length) : l.pathname;
       // Ensure leading slash for app route
